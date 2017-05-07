@@ -5,15 +5,14 @@ import org.panda.utility.FileUtil;
 import org.panda.utility.graph.DirectedGraph;
 import org.panda.utility.graph.Graph;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Ozgun Babur
@@ -25,15 +24,16 @@ public class Main
 
 	String directory;
 
-	Set<SIFEnum> sifTypes;
+	Map<SIFEnum, Integer> sifTypes;
 	GeneAlterationSet gas;
 	Set<String> cancerGenes;
+	Map<String, String> tooltips;
 	String outputFile;
 
 	public Main(String directory)
 	{
 		this.directory = directory;
-		sifTypes = new HashSet<>();
+		sifTypes = new HashMap<>();
 		gas = new GeneAlterationSet();
 		cancerGenes = new HashSet<>();
 	}
@@ -43,7 +43,7 @@ public class Main
 		readParameters(directory);
 
 		NetworkLoader nl = new NetworkLoader(sifTypes);
-		Map<String, Graph> graphs = nl.load();
+		List<Map<String, Graph>> graphs = nl.load();
 
 		Set<String> genes = gas.getGenes();
 
@@ -97,15 +97,31 @@ public class Main
 				FileUtil.lnwrite("node\t" + gene + "\tcolor\t" + bgcolor.getRed() + " " + bgcolor.getGreen() + " " +
 					bgcolor.getBlue(), fmtWriter);
 			}
+			if (tooltips != null && tooltips.containsKey(gene))
+			{
+				FileUtil.lnwrite("node\t" + gene + "\ttooltip\t" + tooltips.get(gene), fmtWriter);
+			}
 		}
 
 		sifWriter.close();
 		fmtWriter.close();
 	}
 
-	private void findEdges(Set<String> set1, Set<String> set2, Map<String, Graph> graphs,
+	private void findEdges(Set<String> set1, Set<String> set2, List<Map<String, Graph>> graphsList,
 		Set<String> genesInGraph, Set<String> edges)
 	{
+		Set<String> avoid = new HashSet<>();
+		for (Map<String, Graph> graphMap : graphsList)
+		{
+			findEdges(set1, set2, graphMap, genesInGraph, edges, avoid);
+		}
+	}
+
+	private void findEdges(Set<String> set1, Set<String> set2, Map<String, Graph> graphs,
+		Set<String> genesInGraph, Set<String> edges, Set<String> avoid)
+	{
+		Set<String> newAvoids = new HashSet<>();
+
 		for (String gene1 : set1)
 		{
 			for (String type : graphs.keySet())
@@ -118,18 +134,14 @@ public class Main
 					{
 						if (set2.contains(gene2))
 						{
-							edges.add(gene1 + "\t" + type + "\t" + gene2 + "\t" + graph.getMediatorsInString(gene1, gene2));
-							genesInGraph.add(gene1);
-							genesInGraph.add(gene2);
+							generateDirectedEdge(gene1, gene2, type, graph, edges, genesInGraph, avoid, newAvoids);
 						}
 					}
 					for (String gene2 : ((DirectedGraph) graph).getUpstream(gene1))
 					{
 						if (set2.contains(gene2))
 						{
-							edges.add(gene2 + "\t" + type + "\t" + gene1 + "\t" + graph.getMediatorsInString(gene2, gene1));
-							genesInGraph.add(gene1);
-							genesInGraph.add(gene2);
+							generateDirectedEdge(gene2, gene1, type, graph, edges, genesInGraph, avoid, newAvoids);
 						}
 					}
 				}
@@ -139,22 +151,43 @@ public class Main
 					{
 						if (set2.contains(gene2))
 						{
-							String g1 = gene1;
-							String g2= gene2;
-							if (g2.compareTo(g1) < 0)
+							String key1 = gene1 + " " + gene2;
+							String key2 = gene2 + " " + gene1;
+							if (!avoid.contains(key1) && !avoid.contains(key2))
 							{
-								String temp = g1;
-								g1 = g2;
-								g2 = temp;
-							}
+								String g1 = gene1;
+								String g2 = gene2;
+								if (g2.compareTo(g1) < 0)
+								{
+									String temp = g1;
+									g1 = g2;
+									g2 = temp;
+								}
 
-							edges.add(g1 + "\t" + type + "\t" + g2 + "\t" + graph.getMediatorsInString(g1, g2));
-							genesInGraph.add(gene1);
-							genesInGraph.add(gene2);
+								edges.add(g1 + "\t" + type + "\t" + g2 + "\t" + graph.getMediatorsInString(g1, g2));
+								genesInGraph.add(gene1);
+								genesInGraph.add(gene2);
+
+								newAvoids.add(key1);
+								newAvoids.add(key2);
+							}
 						}
 					}
 				}
 			}
+		}
+		avoid.addAll(newAvoids);
+	}
+
+	private void generateDirectedEdge(String gene1, String gene2, String type, Graph graph, Set<String> edges, Set<String> genesInGraph, Set<String> avoid, Set<String> newAvoids)
+	{
+		String key = gene1 + " " + gene2;
+		if (!avoid.contains(key))
+		{
+			edges.add(gene1 + "\t" + type + "\t" + gene2 + "\t" + graph.getMediatorsInString(gene1, gene2));
+			genesInGraph.add(gene1);
+			genesInGraph.add(gene2);
+			newAvoids.add(key);
 		}
 	}
 
@@ -187,10 +220,11 @@ public class Main
 	{
 		USE_RELATION_TYPE((value, main) ->
 		{
-			SIFEnum sifEnum = SIFEnum.typeOf(value);
+			String[] t = value.split(" ");
+			SIFEnum sifEnum = SIFEnum.typeOf(t[0]);
 			if (sifEnum != null)
 			{
-				main.sifTypes.add(sifEnum);
+				main.sifTypes.put(sifEnum, Integer.valueOf(t[1]));
 			}
 		}),
 
@@ -203,7 +237,10 @@ public class Main
 		{
 			if (value.endsWith(".sif")) value = value.substring(0, value.length() - 4);
 			main.outputFile = value;
-		})
+		}),
+
+		TOOLTIPS((value, main) -> main.tooltips = Files.lines(Paths.get(main.directory + File.separator + value)).map(l -> l.split("\t"))
+			.collect(Collectors.toMap(t -> t[0], t -> t[1])))
 		;
 
 		ParameterReader reader;

@@ -25,7 +25,8 @@ public enum CancerGeneResource
 		double thr = Double.valueOf(param[2]);
 		return scoreMap.keySet().stream().filter(g -> scoreMap.get(g) <= thr).collect(Collectors.toSet());
 	}),
-	Custom(param -> Files.lines(Paths.get(param[1])).filter(l -> !l.startsWith("#")).collect(Collectors.toSet()));
+	Custom(param -> Files.lines(Paths.get(param[1])).filter(l -> !l.startsWith("#")).map(l -> l.split("\t")[0])
+		.collect(Collectors.toSet()));
 
 	CancerGeneResource(Loader loader)
 	{
