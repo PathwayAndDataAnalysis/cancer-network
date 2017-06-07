@@ -10,6 +10,8 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
+ * Reads Mutex results from a Mutex output directory.
+ *
  * @author Ozgun Babur
  */
 public class MutexReader

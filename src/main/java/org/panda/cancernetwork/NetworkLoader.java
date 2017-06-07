@@ -13,13 +13,24 @@ import java.util.*;
  */
 public class NetworkLoader
 {
+	/**
+	 * Types of relations and their priority.
+	 */
 	Map<SIFEnum, Integer> types;
 
+	/**
+	 * Constructor with types of relations and their priority
+	 * @param types types of relations and their priority
+	 */
 	public NetworkLoader(Map<SIFEnum, Integer> types)
 	{
 		this.types = types;
 	}
 
+	/**
+	 * Loads the network.
+	 * @return ordered sets of graphs
+	 */
 	public List<Map<String, Graph>> load()
 	{
 		List<Map<String, Graph>> list = new ArrayList<>();
@@ -35,7 +46,6 @@ public class NetworkLoader
 			types.keySet().stream().filter(type -> types.get(type) == index).forEach(type ->
 				map.put(type.getTag(), PathwayCommons.get().getGraph(type)));
 		}
-
 
 		return list;
 	}

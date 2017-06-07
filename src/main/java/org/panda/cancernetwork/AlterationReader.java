@@ -9,10 +9,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 /**
+ * Loaders for gene alteration data files.
+ *
  * @author Ozgun Babur
  */
 public enum AlterationReader
 {
+	/**
+	 * Loader for CNVkit results.
+	 */
 	CNVkit((gas, param) ->
 	{
 		String filename = param[1];
@@ -35,14 +40,23 @@ public enum AlterationReader
 		});
 	}),
 
+	/**
+	 * Loader for Mutect results.
+	 */
 	Mutect((gas, param) -> Files.lines(Paths.get(param[1])).skip(1).map(l -> l.split("\t")).
 		forEach(t -> gas.addGeneAlteration(t[5], "m", t[6], GeneFeature.DEFAULT_BACKGROUND_COLOR,
 			t[6].startsWith("Splice") ? "255 0 0" : GeneFeature.DEFAULT_BORDER_COLOR))),
 
+	/**
+	 * Loader for GeneTrails mutations.
+	 */
 	GeneTrailsMutations((gas, param) -> Files.lines(Paths.get(param[1])).skip(1).map(l -> l.split("\t")).
 		forEach(t -> gas.addGeneAlteration(t[8], "m", t[7], GeneFeature.DEFAULT_BACKGROUND_COLOR,
 			t[16].toLowerCase().contains("splice") ? "255 0 0" : GeneFeature.DEFAULT_BORDER_COLOR))),
 
+	/**
+	 * Loader for GeneTrails CNV data.
+	 */
 	GeneTrailsCNV((gas, param) ->
 	{
 		String filename = param[1];
@@ -68,11 +82,21 @@ public enum AlterationReader
 		this.loader = loader;
 	}
 
+	/**
+	 * A Loader knows where to find gene alterations.
+	 */
 	interface Loader
 	{
 		void load(GeneAlterationSet gas, String... params) throws IOException;
 	}
 
+	/**
+	 * Populates the given gene alteration set with gene alterations.
+	 * @param paramValue parameters in a string
+	 * @param gas gene alteration set
+	 * @param workingDirectory base directory for files
+	 * @throws IOException
+	 */
 	public static void loadAlterations(String paramValue, GeneAlterationSet gas, String workingDirectory)
 		throws IOException
 	{
