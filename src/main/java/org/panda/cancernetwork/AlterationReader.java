@@ -48,6 +48,13 @@ public enum AlterationReader
 			t[6].startsWith("Splice") ? "255 0 0" : GeneFeature.DEFAULT_BORDER_COLOR))),
 
 	/**
+          * Loader for Mutect2 results.
+          */
+         Mutect2((gas, param) -> Files.lines(Paths.get(param[1])).skip(1).map(l -> l.split("\t")).
+         	forEach(t -> gas.addGeneAlteration(t[0], "m", t[8], GeneFeature.DEFAULT_BACKGROUND_COLOR,
+             	t[8].startsWith("Splice") ? "255 0 0" : GeneFeature.DEFAULT_BORDER_COLOR))), 
+
+	/**
 	 * Loader for GeneTrails mutations.
 	 */
 	GeneTrailsMutations((gas, param) -> Files.lines(Paths.get(param[1])).skip(1).map(l -> l.split("\t")).
