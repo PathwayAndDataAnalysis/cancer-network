@@ -5,14 +5,21 @@
 Cancer-Network is a tool that contextualizes a cancer patient's gene alterations within a larger body of known oncogenes. It generates a network to visualize these relations using a modified [BioPAX](http://www.biopax.org/) syntax.  Navigate [here](http://www.pathwaycommons.org/pc2/formats#sif_relations) to understand the mapping between a BioPAX structure and its respective modification.
 
 Cancer-Network accepts DNAseq results from the following sources: 
+
 •	[Mutect](https://software.broadinstitute.org/cancer/cga/mutect) (versions 1 and 2)
+
 •	[CNVkit](https://cnvkit.readthedocs.io/en/stable/)
+
 •	[GeneTrails](https://knightdxlabs.ohsu.edu/)
 
 Current oncogene repositories queried to generate network:
+
 •	[OncoKB](http://oncokb.org/#/)
+
 •	[COSMIC](https://cancer.sanger.ac.uk/cosmic)
+
 •	Bushman
+
 •	[Mutex](https://github.com/pathwayanddataanalysis/mutex)
 
 ## Installation:
