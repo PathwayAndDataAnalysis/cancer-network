@@ -28,7 +28,7 @@ Before you begin, ensure that both Maven and Java 8 (JDK is needed to build the 
 
 Clone the Cancer-Network repository to your local machine:
 ```	
-	git clone git@github.com:PathwayAndDataAnalysis/cancer-network.git
+	git clone https://github.com/PathwayAndDataAnalysis/cancer-network.git
 ```
 Navigate into the directory of the repository you just created:
 ```
